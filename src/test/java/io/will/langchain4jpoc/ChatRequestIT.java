@@ -15,7 +15,7 @@ public class ChatRequestIT {
     private WebTestClient webTestClient;
 
     @Test
-    void testAssistant_givenMessage_whenCallEndpoint_thenReturnSuccessfulResponse() {
+    void testChatNonStreaming_thenReturnSuccessResponse() {
         webTestClient.post()
                 .uri("/chat")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -28,5 +28,25 @@ public class ChatRequestIT {
                     assertNotNull(response.content());
                     assertFalse(response.content().isEmpty());
                 });
+    }
+
+    @Test
+    void testChatStreaming_thenReturnSuccessfulFluxResponse() {
+        webTestClient.post()
+                .uri("/chat/streaming")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new AiChatController.ChatRequest("What is the capital of China?"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM_VALUE)
+                .returnResult(AiChatController.ChatResponse.class)
+                .getResponseBody()
+                .take(1)
+                .doOnNext(chunk -> {
+                    assertNotNull(chunk);
+                    assertNotNull(chunk.content());
+                    assertFalse(chunk.content().isEmpty());
+                })
+                .blockLast();
     }
 }
