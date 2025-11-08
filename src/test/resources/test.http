@@ -1,0 +1,26 @@
+
+GET http://localhost:8080/health
+
+POST http://localhost:8080/chat
+Content-Type: application/json
+
+{
+  "message": "What is the capital of China?"
+}
+
+
+### High Level API: AI Service with tools
+POST http://localhost:8080/chat
+Content-Type: application/json
+
+{
+  "message": "What is the current time?"
+}
+
+### High Level API: Streaming AI Service with tools
+POST http://localhost:8080/chat/streaming
+Content-Type: application/json
+
+{
+  "message": "What is the current time?"
+}
