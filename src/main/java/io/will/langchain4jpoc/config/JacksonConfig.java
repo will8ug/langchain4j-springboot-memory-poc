@@ -9,7 +9,6 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
@@ -20,20 +19,18 @@ import java.io.IOException;
 @Configuration
 public class JacksonConfig implements WebFluxConfigurer {
 
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+    
+    public JacksonConfig(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         SimpleModule module = new SimpleModule();
-        
         module.addSerializer(ChatMessage.class, new ChatMessageSerializer());
-        
-        mapper.registerModule(module);
-        return mapper;
+        objectMapper.registerModule(module);
     }
 
     @Override
     public void configureHttpMessageCodecs(ServerCodecConfigurer configurer) {
-        configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper()));
+        configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper));
     }
 
     static class ChatMessageSerializer extends JsonSerializer<ChatMessage> {
@@ -41,15 +38,18 @@ public class JacksonConfig implements WebFluxConfigurer {
         public void serialize(ChatMessage message, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
             gen.writeStringField("type", message.type().name());
-            
-            if (message instanceof SystemMessage) {
-                gen.writeStringField("text", ((SystemMessage) message).text());
-            } else if (message instanceof UserMessage) {
-                gen.writeStringField("text", ((UserMessage) message).singleText());
-            } else if (message instanceof AiMessage aiMessage) {
-                gen.writeStringField("text", aiMessage.text());
-                if (aiMessage.hasToolExecutionRequests()) {
-                    gen.writeBooleanField("hasToolExecutionRequests", true);
+
+            switch (message) {
+                case SystemMessage systemMessage -> gen.writeStringField("text", systemMessage.text());
+                case UserMessage userMessage -> gen.writeStringField("text", userMessage.singleText());
+                case AiMessage aiMessage -> {
+                    gen.writeStringField("text", aiMessage.text());
+                    if (aiMessage.hasToolExecutionRequests()) {
+                        gen.writeBooleanField("hasToolExecutionRequests", true);
+                    }
+                }
+                default -> {
+                    // NOP for now
                 }
             }
             
