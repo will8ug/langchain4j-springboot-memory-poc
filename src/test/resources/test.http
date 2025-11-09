@@ -1,6 +1,8 @@
 
 GET http://localhost:8080/health
 
+GET http://localhost:8080/memory/default
+
 POST http://localhost:8080/chat
 Content-Type: application/json
 
@@ -38,4 +40,36 @@ Content-Type: application/json
 
 {
   "message": "Analyze Spring-AI vs LangChain4j"
+}
+
+#########
+POST http://localhost:8080/chat
+Content-Type: application/json
+
+{
+  "message": "Hello, my name is Bob. I would like to discuss planning a trip to Athens, Greece."
+}
+
+
+POST http://localhost:8080/chat
+Content-Type: application/json
+
+{
+  "message": "Thanks, let's look at transportation options. What are the available flights from Lyon to Athens?"
+}
+
+
+POST http://localhost:8080/chat
+Content-Type: application/json
+
+{
+  "message": "Ok, I found a flight from Lyon to Athens on August 15th at 10:00 AM. The flight is operated by Air France and arrives in Athens at 1:30 PM. The cost is approximately €150. Once in Athens, what are the available transportation options to get to the city center?"
+}
+
+
+POST http://localhost:8080/chat
+Content-Type: application/json
+
+{
+  "message": "Thanks, I will take a taxi from the airport to the city center. How long does it take to get from Athens airport to the city center by taxi?"
 }
