@@ -21,7 +21,7 @@ public class AiChatController {
         this.aiAssistantService = aiAssistantService;
     }
 
-    @GetMapping("/health")
+    @GetMapping(value = "/health", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> health() {
         return ResponseEntity.ok(Map.of("status", "UP", "service", "LangChain4j PoC"));
     }

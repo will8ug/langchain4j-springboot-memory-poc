@@ -16,6 +16,15 @@ Content-Type: application/json
   "message": "What is the current time?"
 }
 
+
+POST http://localhost:8080/chat/streaming
+Content-Type: application/json
+
+{
+  "message": "Introduce China within 150 words"
+}
+
+
 POST http://localhost:8080/chat/streaming
 Content-Type: application/json
 
