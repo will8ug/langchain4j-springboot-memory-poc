@@ -34,9 +34,7 @@ public class AiChatController {
 
     @PostMapping(value = "/chat/streaming", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ChatResponse> chatStreaming(@RequestBody ChatRequest chatRequest) {
-        return aiAssistantService.chatStreaming(chatRequest.message())
-                .map(ChatResponse::new)
-                .subscribeOn(Schedulers.boundedElastic());
+        return aiAssistantService.chatStreaming(chatRequest.message()).map(ChatResponse::new);
     }
 
     public record ChatRequest(String message) {}
