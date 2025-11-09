@@ -14,6 +14,8 @@ import java.util.Map;
 
 @RestController
 public class AiChatController {
+    private final String DEFAULT_MEMORY_ID = "default";
+
     private final AiAssistantService aiAssistantService;
 
     public AiChatController(AiAssistantService aiAssistantService) {
@@ -27,14 +29,16 @@ public class AiChatController {
 
     @PostMapping(value = "/chat", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ChatResponse> chat(@RequestBody ChatRequest chatRequest) {
-        return Mono.fromCallable(() -> aiAssistantService.chat(chatRequest.message()))
+        return Mono.fromCallable(() -> aiAssistantService.chat(DEFAULT_MEMORY_ID, chatRequest.message()))
                 .map(ChatResponse::new)
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
     @PostMapping(value = "/chat/streaming", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ChatResponse> chatStreaming(@RequestBody ChatRequest chatRequest) {
-        return aiAssistantService.chatStreaming(chatRequest.message()).map(ChatResponse::new);
+        return aiAssistantService
+                .chatStreaming(DEFAULT_MEMORY_ID, chatRequest.message())
+                .map(ChatResponse::new);
     }
 
     public record ChatRequest(String message) {}

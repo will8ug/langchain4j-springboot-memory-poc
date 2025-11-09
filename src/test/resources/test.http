@@ -13,7 +13,15 @@ POST http://localhost:8080/chat
 Content-Type: application/json
 
 {
-  "message": "What is the current time?"
+  "message": "Hello, my name is Will"
+}
+
+
+POST http://localhost:8080/chat
+Content-Type: application/json
+
+{
+  "message": "What is my name?"
 }
 
 
