@@ -2,7 +2,6 @@ package io.will.langchain4jpoc.controller;
 
 import io.will.langchain4jpoc.service.AiAssistantService;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,8 +21,8 @@ public class AiChatController {
     }
 
     @GetMapping(value = "/health", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, String>> health() {
-        return ResponseEntity.ok(Map.of("status", "UP", "service", "LangChain4j PoC"));
+    public Mono<Map<String, String>> health() {
+        return Mono.just(Map.of("status", "UP", "service", "LangChain4j PoC"));
     }
 
     @PostMapping(value = "/chat", produces = MediaType.APPLICATION_JSON_VALUE)
