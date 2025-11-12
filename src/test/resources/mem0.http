@@ -1,0 +1,66 @@
+@mem0ApiKey=xxx
+
+##### Add Messages
+POST https://api.mem0.ai/v1/memories/
+Authorization: Token {{mem0ApiKey}}
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+        "role": "user",
+        "content": "this is a test message."
+    }
+  ],
+  "user_id": "will",
+  "app_id": "curl-test-001",
+  "version": "v2"
+}
+
+###
+POST https://api.mem0.ai/v1/memories/
+Authorization: Token {{mem0ApiKey}}
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+        "role": "user",
+        "content": "My name is Will."
+    }
+  ],
+  "user_id": "will",
+  "app_id": "curl-test-001",
+  "version": "v2"
+}
+
+##### Get Messages
+POST https://api.mem0.ai/v2/memories/
+Authorization: Token {{mem0ApiKey}}
+Content-Type: application/json
+
+{
+  "filters": {
+    "AND": [
+      { "user_id": "will" },
+      { "app_id": "curl-test-001" },
+      { "created_at": { "gte": "2025-11-01", "lte": "2025-11-12" } }
+    ]
+  }
+}
+
+##### Search Messages
+POST https://api.mem0.ai/v2/memories/search/
+Authorization: Token {{mem0ApiKey}}
+Content-Type: application/json
+
+{
+  "query": "What is my name?",
+  "filters": {
+    "AND": [
+      { "user_id": "will" },
+      { "app_id": "curl-test-001" }
+    ]
+  },
+  "top_k": "3"
+}
