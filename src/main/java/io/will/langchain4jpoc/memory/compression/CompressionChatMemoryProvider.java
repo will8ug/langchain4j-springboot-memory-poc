@@ -1,4 +1,4 @@
-package io.will.langchain4jpoc.memory;
+package io.will.langchain4jpoc.memory.compression;
 
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
