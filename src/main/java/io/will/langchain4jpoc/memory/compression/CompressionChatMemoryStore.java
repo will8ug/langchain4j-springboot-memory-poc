@@ -11,12 +11,14 @@ import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "chat.memory.provider", havingValue = "compression")
 public class CompressionChatMemoryStore implements ChatMemoryStore {
     private final static Logger logger = LoggerFactory.getLogger(CompressionChatMemoryStore.class);
     private final ChatMemoryStore delegate;

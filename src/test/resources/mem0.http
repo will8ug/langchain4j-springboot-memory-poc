@@ -1,6 +1,6 @@
 @mem0ApiKey=xxx
 
-##### Add Messages
+##### Add Memories
 POST https://api.mem0.ai/v1/memories/
 Authorization: Token {{mem0ApiKey}}
 Content-Type: application/json
@@ -17,7 +17,7 @@ Content-Type: application/json
   "version": "v2"
 }
 
-###
+### Add Memories
 POST https://api.mem0.ai/v1/memories/
 Authorization: Token {{mem0ApiKey}}
 Content-Type: application/json
@@ -34,7 +34,7 @@ Content-Type: application/json
   "version": "v2"
 }
 
-##### Get Messages
+##### Get Memories
 POST https://api.mem0.ai/v2/memories/
 Authorization: Token {{mem0ApiKey}}
 Content-Type: application/json
@@ -49,7 +49,7 @@ Content-Type: application/json
   }
 }
 
-##### Search Messages
+##### Search Memories
 POST https://api.mem0.ai/v2/memories/search/
 Authorization: Token {{mem0ApiKey}}
 Content-Type: application/json
