@@ -24,7 +24,7 @@ public class AiChatController {
     }
 
     @PostMapping(value = "/chat", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ChatResponse> chat(@RequestBody ChatRequest chatRequest) {
+    public Mono<CustomChatResponse> chat(@RequestBody CustomChatRequest chatRequest) {
         String query = chatRequest.message();
         logger.info("Processing chat request with query: {}", query);
         
@@ -44,7 +44,7 @@ public class AiChatController {
                         }
                     });
                 })
-                .map(ChatResponse::new)
+                .map(CustomChatResponse::new)
                 .contextWrite(QueryContext.createContext(DEFAULT_MEMORY_ID, query))
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnError(e -> logger.error("Error processing chat request: {}", e.getMessage(), e))
@@ -55,7 +55,7 @@ public class AiChatController {
     }
 
     @PostMapping(value = "/chat/streaming", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ChatResponse> chatStreaming(@RequestBody ChatRequest chatRequest) {
+    public Flux<CustomChatResponse> chatStreaming(@RequestBody CustomChatRequest chatRequest) {
         String query = chatRequest.message();
         logger.info("Processing streaming chat request with query: {}", query);
         
@@ -67,7 +67,7 @@ public class AiChatController {
                     // Ensure query is available in ThreadLocal when subscription starts
                     QueryContext.setQuery(DEFAULT_MEMORY_ID, query);
                 })
-                .map(ChatResponse::new)
+                .map(CustomChatResponse::new)
                 .doOnError(e -> logger.error("Error processing streaming chat request: {}", e.getMessage(), e))
                 .doFinally(signalType -> {
                     logger.info("Clearing query for memory ID after streaming chat request");
@@ -75,7 +75,7 @@ public class AiChatController {
                 });
     }
 
-    public record ChatRequest(String message) {}
+    public record CustomChatRequest(String message) {}
 
-    public record ChatResponse(String content) {}
+    public record CustomChatResponse(String content) {}
 }

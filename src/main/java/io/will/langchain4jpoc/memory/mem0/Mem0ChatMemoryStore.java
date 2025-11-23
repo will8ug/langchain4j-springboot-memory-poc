@@ -135,7 +135,6 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
             JsonNode response = mem0Client.searchMemories(query, userId, appId, topK);
             
             List<ChatMessage> messages = new ArrayList<>();
-            
             // Mem0 API returns an array directly
             if (response != null && response.isArray()) {
                 for (JsonNode memory : response) {

@@ -20,10 +20,10 @@ public class ChatRequestIT {
         webTestClient.post()
                 .uri("/chat")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(new AiChatController.ChatRequest("This is a test message"))
+                .bodyValue(new AiChatController.CustomChatRequest("This is a test message"))
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(AiChatController.ChatResponse.class)
+                .expectBody(AiChatController.CustomChatResponse.class)
                 .value(response -> {
                     assertNotNull(response);
                     assertNotNull(response.content());
@@ -37,11 +37,11 @@ public class ChatRequestIT {
         webTestClient.post()
                 .uri("/chat/streaming")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(new AiChatController.ChatRequest("What is the capital of China?"))
+                .bodyValue(new AiChatController.CustomChatRequest("What is the capital of China?"))
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM_VALUE)
-                .returnResult(AiChatController.ChatResponse.class)
+                .returnResult(AiChatController.CustomChatResponse.class)
                 .getResponseBody()
                 .take(1)
                 .doOnNext(chunk -> {

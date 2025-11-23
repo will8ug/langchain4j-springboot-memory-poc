@@ -1,6 +1,7 @@
 package io.will.langchain4jpoc.memory.mem0;
 
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.ChatMemory;
 import org.slf4j.Logger;
@@ -8,15 +9,26 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
-public record Mem0ChatMemory(
-        Object memoryId,
-        Mem0ChatMemoryStore store,
-        Supplier<String> querySupplier,
-        int maxMessages
-) implements ChatMemory {
+public class Mem0ChatMemory implements ChatMemory {
     private static final Logger logger = LoggerFactory.getLogger(Mem0ChatMemory.class);
+
+    private final ConcurrentMap<Object, ChatMessage> systemMessageStore = new ConcurrentHashMap<>();
+    
+    private final Object memoryId;
+    private final Mem0ChatMemoryStore store;
+    private final Supplier<String> querySupplier;
+    private final int maxMessages;
+    
+    public Mem0ChatMemory(Object memoryId, Mem0ChatMemoryStore store, Supplier<String> querySupplier, int maxMessages) {
+        this.memoryId = memoryId;
+        this.store = store;
+        this.querySupplier = querySupplier;
+        this.maxMessages = maxMessages;
+    }
 
     @Override
     public Object id() {
@@ -26,6 +38,12 @@ public record Mem0ChatMemory(
     @Override
     public void add(ChatMessage message) {
         logger.info("Adding message to memory ID: {} | {}", memoryId, message.toString());
+
+        if (message instanceof SystemMessage systemMsg) {
+            systemMessageStore.put(memoryId, systemMsg);
+            return;
+        }
+
         List<ChatMessage> messages = new ArrayList<>(messages());
         messages.add(message);
 
@@ -40,6 +58,7 @@ public record Mem0ChatMemory(
     public List<ChatMessage> messages() {
         logger.info("Getting messages for memory ID: {}", memoryId);
 
+        List<ChatMessage> result = new ArrayList<>();
         try {
             String currentQuery = querySupplier != null ? querySupplier.get() : null;
 
@@ -49,27 +68,30 @@ public record Mem0ChatMemory(
                 if (chatMessageList == null || chatMessageList.isEmpty()) {
                     chatMessageList = List.of(new UserMessage(currentQuery));
                 }
-                return chatMessageList;
+                result.addAll(chatMessageList);
             } else { // fallback to return all
                 logger.debug("Getting all messages (no query provided)");
-                return store.getMessages(memoryId);
+                result.addAll(store.getMessages(memoryId));
             }
         } catch (Exception e) {
             logger.error("Failed to get messages: {}", e.getMessage(), e);
             // fallback to return all memories if Exceptions found
             try {
-                return store.getMessages(memoryId);
+                result.addAll(store.getMessages(memoryId));
             } catch (Exception fallbackException) {
                 logger.error("Fallback to empty messages failed: {}", fallbackException.getMessage(), fallbackException);
-                return new ArrayList<>();
             }
         }
+
+        result.addFirst(systemMessageStore.get(memoryId));
+        return result;
     }
 
     @Override
     public void clear() {
         logger.info("Clearing messages for memory ID: {}", memoryId);
         store.deleteMessages(memoryId);
+        systemMessageStore.remove(memoryId);
     }
 
     public static Builder builder() {
