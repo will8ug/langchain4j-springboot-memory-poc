@@ -1,6 +1,6 @@
 package io.will.langchain4jpoc.controller;
 
-import io.will.langchain4jpoc.memory.mem0.Mem0ChatMemoryProvider;
+import io.will.langchain4jpoc.memory.mem0.QueryContext;
 import io.will.langchain4jpoc.service.AiAssistantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,51 +18,61 @@ public class AiChatController {
     public final static String DEFAULT_MEMORY_ID = "default";
 
     private final AiAssistantService aiAssistantService;
-    private final Mem0ChatMemoryProvider mem0ChatMemoryProvider;
 
-    public AiChatController(AiAssistantService aiAssistantService, Mem0ChatMemoryProvider mem0ChatMemoryProvider) {
+    public AiChatController(AiAssistantService aiAssistantService) {
         this.aiAssistantService = aiAssistantService;
-        this.mem0ChatMemoryProvider = mem0ChatMemoryProvider;
     }
 
     @PostMapping(value = "/chat", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ChatResponse> chat(@RequestBody ChatRequest chatRequest) {
-        try {
-            logger.info("Setting current query for chat request");
-            mem0ChatMemoryProvider.setCurrentQuery(chatRequest.message());
-            
-            return Mono.fromCallable(() -> aiAssistantService.chat(DEFAULT_MEMORY_ID, chatRequest.message()))
-                    .map(ChatResponse::new)
-                    .subscribeOn(Schedulers.boundedElastic())
-                    .doFinally(signalType -> {
-                        logger.info("Clearing current query after chat request");
-                        mem0ChatMemoryProvider.clearCurrentQuery();
+        String query = chatRequest.message();
+        logger.info("Processing chat request with query: {}", query);
+        
+        // Set query in Reactor Context first, then propagate to ThreadLocal on execution thread
+        return Mono.deferContextual(ctx -> {
+                    return Mono.fromCallable(() -> {
+                        // Propagate context to ThreadLocal on the execution thread (after subscribeOn)
+                        QueryContext.propagateFromContext(ctx);
+                        // Also set directly as a fallback
+                        QueryContext.setQuery(DEFAULT_MEMORY_ID, query);
+                        
+                        try {
+                            return aiAssistantService.chat(DEFAULT_MEMORY_ID, chatRequest.message());
+                        } finally {
+                            // Clean up ThreadLocal after execution
+                            QueryContext.clearQuery(DEFAULT_MEMORY_ID);
+                        }
                     });
-        } catch (Exception e) {
-            mem0ChatMemoryProvider.clearCurrentQuery();
-            logger.error("Error processing chat request: {}", e.getMessage(), e);
-            throw e;
-        }
+                })
+                .map(ChatResponse::new)
+                .contextWrite(QueryContext.createContext(DEFAULT_MEMORY_ID, query))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnError(e -> logger.error("Error processing chat request: {}", e.getMessage(), e))
+                .doFinally(signalType -> {
+                    logger.info("Clearing query for memory ID after chat request");
+                    QueryContext.clearQuery(DEFAULT_MEMORY_ID);
+                });
     }
 
     @PostMapping(value = "/chat/streaming", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ChatResponse> chatStreaming(@RequestBody ChatRequest chatRequest) {
-        try {
-            logger.info("Setting current query for streaming chat request");
-            mem0ChatMemoryProvider.setCurrentQuery(chatRequest.message());
-            
-            return aiAssistantService
-                    .chatStreaming(DEFAULT_MEMORY_ID, chatRequest.message())
-                    .map(ChatResponse::new)
-                    .doFinally(signalType -> {
-                        logger.info("Clearing current query after streaming chat request");
-                        mem0ChatMemoryProvider.clearCurrentQuery();
-                    });
-        } catch (Exception e) {
-            mem0ChatMemoryProvider.clearCurrentQuery();
-            logger.error("Error processing streaming chat request: {}", e.getMessage(), e);
-            throw e;
-        }
+        String query = chatRequest.message();
+        logger.info("Processing streaming chat request with query: {}", query);
+        
+        // Set query in Reactor Context and propagate to ThreadLocal
+        return aiAssistantService.chatStreaming(DEFAULT_MEMORY_ID, query)
+                .contextWrite(QueryContext.createContext(DEFAULT_MEMORY_ID, query))
+                .transform(QueryContext::propagateContext)
+                .doOnSubscribe(subscription -> {
+                    // Ensure query is available in ThreadLocal when subscription starts
+                    QueryContext.setQuery(DEFAULT_MEMORY_ID, query);
+                })
+                .map(ChatResponse::new)
+                .doOnError(e -> logger.error("Error processing streaming chat request: {}", e.getMessage(), e))
+                .doFinally(signalType -> {
+                    logger.info("Clearing query for memory ID after streaming chat request");
+                    QueryContext.clearQuery(DEFAULT_MEMORY_ID);
+                });
     }
 
     public record ChatRequest(String message) {}

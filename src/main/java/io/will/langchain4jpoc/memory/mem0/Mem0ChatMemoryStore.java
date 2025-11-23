@@ -97,25 +97,10 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
             
             List<ChatMessage> messages = new ArrayList<>();
             
-            if (response.has("data") && response.get("data").isArray()) {
-                for (JsonNode memory : response.get("data")) {
-                    if (memory.has("messages") && memory.get("messages").isArray()) {
-                        for (JsonNode msgNode : memory.get("messages")) {
-                            String role = msgNode.get("role").asText();
-                            String content = msgNode.get("content").asText();
-                            
-                            ChatMessage chatMessage;
-                            if ("user".equals(role)) {
-                                chatMessage = UserMessage.from(content);
-                            } else if ("assistant".equals(role) || "ai".equals(role)) {
-                                chatMessage = AiMessage.from(content);
-                            } else {
-                                continue;
-                            }
-                            
-                            messages.add(chatMessage);
-                        }
-                    }
+            // Mem0 API returns an array directly
+            if (response != null && response.isArray()) {
+                for (JsonNode memory : response) {
+                    extractMessagesFromMemory(memory, messages);
                 }
             }
             
@@ -151,25 +136,10 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
             
             List<ChatMessage> messages = new ArrayList<>();
             
-            if (response.has("data") && response.get("data").isArray()) {
-                for (JsonNode memory : response.get("data")) {
-                    if (memory.has("messages") && memory.get("messages").isArray()) {
-                        for (JsonNode msgNode : memory.get("messages")) {
-                            String role = msgNode.get("role").asText();
-                            String content = msgNode.get("content").asText();
-                            
-                            ChatMessage chatMessage;
-                            if ("user".equals(role)) {
-                                chatMessage = UserMessage.from(content);
-                            } else if ("assistant".equals(role) || "ai".equals(role)) {
-                                chatMessage = AiMessage.from(content);
-                            } else {
-                                continue;
-                            }
-                            
-                            messages.add(chatMessage);
-                        }
-                    }
+            // Mem0 API returns an array directly
+            if (response != null && response.isArray()) {
+                for (JsonNode memory : response) {
+                    extractMessagesFromMemory(memory, messages);
                 }
             }
             
@@ -178,6 +148,17 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
         } catch (Exception e) {
             logger.error("Failed to search messages: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to search messages", e);
+        }
+    }
+    
+    private void extractMessagesFromMemory(JsonNode memory, List<ChatMessage> messages) {
+        if (memory.has("memory") && memory.get("memory").isTextual()) {
+            String memoryContent = memory.get("memory").asText();
+            if (memoryContent != null && !memoryContent.trim().isEmpty()) {
+                // Since Mem0 API doesn't provide role information in the response,
+                // we treat the memory content as a UserMessage
+                messages.add(UserMessage.from(memoryContent));
+            }
         }
     }
 }

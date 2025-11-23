@@ -1,6 +1,7 @@
 package io.will.langchain4jpoc.memory.mem0;
 
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.ChatMemory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ public record Mem0ChatMemory(
 
     @Override
     public void add(ChatMessage message) {
-        logger.info("Adding message to memory ID: {}", memoryId);
+        logger.info("Adding message to memory ID: {} | {}", memoryId, message.toString());
         List<ChatMessage> messages = new ArrayList<>(messages());
         messages.add(message);
 
@@ -42,12 +43,15 @@ public record Mem0ChatMemory(
         try {
             String currentQuery = querySupplier != null ? querySupplier.get() : null;
 
-            // Search memory if current query exists
             if (currentQuery != null && !currentQuery.trim().isEmpty()) {
-                logger.debug("Using search with query: {}", currentQuery);
-                return store.searchMessages(memoryId, currentQuery);
-            } else { // otherwise, fallback to return all
-                logger.debug("Getting all messages");
+                logger.debug("Searching with query: {}", currentQuery);
+                List<ChatMessage> chatMessageList = store.searchMessages(memoryId, currentQuery);
+                if (chatMessageList == null || chatMessageList.isEmpty()) {
+                    chatMessageList = List.of(new UserMessage(currentQuery));
+                }
+                return chatMessageList;
+            } else { // fallback to return all
+                logger.debug("Getting all messages (no query provided)");
                 return store.getMessages(memoryId);
             }
         } catch (Exception e) {
@@ -66,11 +70,6 @@ public record Mem0ChatMemory(
     public void clear() {
         logger.info("Clearing messages for memory ID: {}", memoryId);
         store.deleteMessages(memoryId);
-    }
-
-    public List<ChatMessage> searchMessages(String query) {
-        logger.info("Searching messages with query: {}", query);
-        return store.searchMessages(memoryId, query);
     }
 
     public static Builder builder() {

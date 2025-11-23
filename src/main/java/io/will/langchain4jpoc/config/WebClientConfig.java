@@ -18,8 +18,8 @@ public class WebClientConfig {
         HttpClient httpClient = HttpClient.create()
                 .responseTimeout(Duration.ofSeconds(30))
                 .doOnConnected(conn -> conn
-                        .addHandlerLast(new ReadTimeoutHandler(1, TimeUnit.SECONDS))
-                        .addHandlerLast(new WriteTimeoutHandler(1, TimeUnit.SECONDS)));
+                        .addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
+                        .addHandlerLast(new WriteTimeoutHandler(3, TimeUnit.SECONDS)));
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
