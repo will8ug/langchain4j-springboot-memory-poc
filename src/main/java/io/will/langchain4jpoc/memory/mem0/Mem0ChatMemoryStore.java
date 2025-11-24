@@ -67,7 +67,7 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
             if (!mem0Messages.isEmpty()) {
                 // only add the last message
                 List<Mem0Client.Message> lastMessages = new ArrayList<>();
-                lastMessages.add(mem0Messages.get(mem0Messages.size() - 1));
+                lastMessages.add(mem0Messages.getLast());
                 
                 mem0Client.addMemory(userId, appId, lastMessages);
                 logger.info("Added messages to mem0 for user: {}", userId);

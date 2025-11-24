@@ -59,16 +59,7 @@ public class QueryContext {
         threadLocalQueries.get().remove(memoryId);
         logger.debug("Cleared query for memory ID: {}", memoryId);
     }
-    
-    /**
-     * Clears all queries from ThreadLocal storage.
-     * This should be called at the end of a request to prevent memory leaks.
-     */
-    public static void clearThreadLocal() {
-        threadLocalQueries.get().clear();
-        logger.debug("Cleared ThreadLocal queries");
-    }
-    
+
     /**
      * Creates a Reactor Context with the query stored for the given memory ID.
      * This should be used with contextWrite() in reactive chains.

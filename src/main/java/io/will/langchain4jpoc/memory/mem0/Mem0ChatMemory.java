@@ -21,13 +21,11 @@ public class Mem0ChatMemory implements ChatMemory {
     private final Object memoryId;
     private final Mem0ChatMemoryStore store;
     private final Supplier<String> querySupplier;
-    private final int maxMessages;
-    
-    public Mem0ChatMemory(Object memoryId, Mem0ChatMemoryStore store, Supplier<String> querySupplier, int maxMessages) {
+
+    public Mem0ChatMemory(Object memoryId, Mem0ChatMemoryStore store, Supplier<String> querySupplier) {
         this.memoryId = memoryId;
         this.store = store;
         this.querySupplier = querySupplier;
-        this.maxMessages = maxMessages;
     }
 
     @Override
@@ -40,17 +38,13 @@ public class Mem0ChatMemory implements ChatMemory {
         logger.info("Adding message to memory ID: {} | {}", memoryId, message.toString());
 
         if (message instanceof SystemMessage systemMsg) {
+            // only retain the last system message
             systemMessageStore.put(memoryId, systemMsg);
             return;
         }
 
         List<ChatMessage> messages = new ArrayList<>(messages());
         messages.add(message);
-
-        if (messages.size() > maxMessages) {
-            messages = messages.subList(messages.size() - maxMessages, messages.size());
-        }
-
         store.updateMessages(memoryId, messages);
     }
 
@@ -101,7 +95,6 @@ public class Mem0ChatMemory implements ChatMemory {
         private Mem0ChatMemoryStore store;
         private Object memoryId;
         private Supplier<String> querySupplier = () -> null;
-        private int maxMessages = 20;
 
         private Builder() {
         }
@@ -121,11 +114,6 @@ public class Mem0ChatMemory implements ChatMemory {
             return this;
         }
 
-        public Builder maxMessages(int maxMessages) {
-            this.maxMessages = maxMessages;
-            return this;
-        }
-
         public Mem0ChatMemory build() {
             if (store == null) {
                 throw new IllegalStateException("ChatMemoryStore must be set");
@@ -133,7 +121,7 @@ public class Mem0ChatMemory implements ChatMemory {
             if (memoryId == null) {
                 throw new IllegalStateException("MemoryId must be set");
             }
-            return new Mem0ChatMemory(memoryId, store, querySupplier, maxMessages);
+            return new Mem0ChatMemory(memoryId, store, querySupplier);
         }
     }
 }
