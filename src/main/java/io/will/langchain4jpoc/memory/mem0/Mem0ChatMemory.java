@@ -59,16 +59,13 @@ public class Mem0ChatMemory implements ChatMemory {
         logger.info("Getting messages for memory ID: {}", memoryId);
 
         List<ChatMessage> result = new ArrayList<>();
+        String currentQuery = "";
         try {
-            String currentQuery = querySupplier != null ? querySupplier.get() : null;
+            currentQuery = querySupplier != null ? querySupplier.get() : null;
 
             if (currentQuery != null && !currentQuery.trim().isEmpty()) {
                 logger.debug("Searching with query: {}", currentQuery);
-                List<ChatMessage> chatMessageList = store.searchMessages(memoryId, currentQuery);
-                if (chatMessageList == null || chatMessageList.isEmpty()) {
-                    chatMessageList = List.of(new UserMessage(currentQuery));
-                }
-                result.addAll(chatMessageList);
+                result.addAll(store.searchMessages(memoryId, currentQuery));
             } else { // fallback to return all
                 logger.debug("Getting all messages (no query provided)");
                 result.addAll(store.getMessages(memoryId));
@@ -83,7 +80,9 @@ public class Mem0ChatMemory implements ChatMemory {
             }
         }
 
+        // system message and the current user query have to be handled separately under LangChain4j
         result.addFirst(systemMessageStore.get(memoryId));
+        result.addLast(new UserMessage(currentQuery));
         return result;
     }
 
