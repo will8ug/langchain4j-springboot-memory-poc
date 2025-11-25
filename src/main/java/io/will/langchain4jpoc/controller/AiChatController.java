@@ -58,15 +58,15 @@ public class AiChatController {
     public Flux<CustomChatResponse> chatStreaming(@RequestBody CustomChatRequest chatRequest) {
         String query = chatRequest.message();
         logger.info("Processing streaming chat request with query: {}", query);
-        
-        // Set query in Reactor Context and propagate to ThreadLocal
-        return aiAssistantService.chatStreaming(DEFAULT_MEMORY_ID, query)
+
+        return Flux.deferContextual(contextView -> Flux.defer(() -> {
+                    QueryContext.propagateFromContext(contextView);
+                    QueryContext.setQuery(DEFAULT_MEMORY_ID, query);
+                    return aiAssistantService.chatStreaming(DEFAULT_MEMORY_ID, query);
+                }))
                 .contextWrite(QueryContext.createContext(DEFAULT_MEMORY_ID, query))
                 .transform(QueryContext::propagateContext)
-                .doOnSubscribe(subscription -> {
-                    // Ensure query is available in ThreadLocal when subscription starts
-                    QueryContext.setQuery(DEFAULT_MEMORY_ID, query);
-                })
+                .subscribeOn(Schedulers.boundedElastic())
                 .map(CustomChatResponse::new)
                 .doOnError(e -> logger.error("Error processing streaming chat request: {}", e.getMessage(), e))
                 .doFinally(signalType -> {

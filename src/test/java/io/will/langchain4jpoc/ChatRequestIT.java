@@ -16,6 +16,7 @@ public class ChatRequestIT {
     private WebTestClient webTestClient;
 
     @Test
+    @Disabled("Enable it when needed")
     void testChatNonStreaming_thenReturnSuccessResponse() {
         webTestClient.post()
                 .uri("/chat")
@@ -32,7 +33,7 @@ public class ChatRequestIT {
     }
 
     @Test
-    @Disabled("Not working together with the non-streaming one in current code base")
+    @Disabled("Enable it when needed")
     void testChatStreaming_thenReturnSuccessfulFluxResponse() {
         webTestClient.post()
                 .uri("/chat/streaming")

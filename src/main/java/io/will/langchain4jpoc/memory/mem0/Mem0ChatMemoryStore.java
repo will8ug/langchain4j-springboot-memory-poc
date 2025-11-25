@@ -14,8 +14,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @ConditionalOnProperty(name = "chat.memory.provider", havingValue = "mem0")
@@ -25,8 +23,6 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
     private final Mem0Client mem0Client;
     private final String appId;
     private final int topK;
-    
-    private final Map<Object, List<ChatMessage>> localCache = new ConcurrentHashMap<>();
     
     public Mem0ChatMemoryStore(Mem0Client mem0Client,
                              @Value("${mem0.app.id:langchain4j-springboot-poc}") String appId,
@@ -72,9 +68,6 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
                 mem0Client.addMemory(userId, appId, lastMessages);
                 logger.info("Added messages to mem0 for user: {}", userId);
             }
-            
-            localCache.put(memoryId, new ArrayList<>(messages));
-            
         } catch (Exception e) {
             logger.error("Failed to update messages: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to update messages", e);
@@ -86,12 +79,6 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
         logger.info("Getting messages for memory ID: {}", memoryId);
         
         try {
-            List<ChatMessage> cachedMessages = localCache.get(memoryId);
-            if (cachedMessages != null && !cachedMessages.isEmpty()) {
-                logger.debug("Returning cached messages for memory ID: {}", memoryId);
-                return new ArrayList<>(cachedMessages);
-            }
-            
             String userId = memoryId.toString();
             JsonNode response = mem0Client.getMemories(userId, appId);
             
@@ -103,8 +90,6 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
                     extractMessagesFromMemory(memory, messages);
                 }
             }
-            
-            localCache.put(memoryId, messages);
             
             logger.info("Retrieved {} messages from mem0 for memory ID: {}", messages.size(), memoryId);
             return new ArrayList<>(messages);
@@ -118,10 +103,7 @@ public class Mem0ChatMemoryStore implements ChatMemoryStore {
     public void deleteMessages(Object memoryId) {
         logger.info("Deleting messages for memory ID: {}", memoryId);
         
-        localCache.remove(memoryId);
-        
-        // TODO: call DELETE /v1/memories/{memory_id}/
-        logger.warn("Delete operation only removed messages from local cache. Mem0 API may not support deletion.");
+        logger.warn("Delete operation is skipped for now.");
     }
     
     /**

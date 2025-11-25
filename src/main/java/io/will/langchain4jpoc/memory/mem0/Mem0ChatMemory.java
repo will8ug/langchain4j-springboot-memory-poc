@@ -75,8 +75,13 @@ public class Mem0ChatMemory implements ChatMemory {
         }
 
         // system message and the current user query have to be handled separately under LangChain4j
-        result.addFirst(systemMessageStore.get(memoryId));
-        result.addLast(new UserMessage(currentQuery));
+        ChatMessage sysMsg = systemMessageStore.get(memoryId);
+        if (sysMsg != null) {
+            result.addFirst(systemMessageStore.get(memoryId));
+        }
+        if (currentQuery != null && !currentQuery.trim().isEmpty()) {
+            result.addLast(new UserMessage(currentQuery));
+        }
         return result;
     }
 
