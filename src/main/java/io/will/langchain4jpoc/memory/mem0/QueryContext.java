@@ -30,31 +30,18 @@ public class QueryContext {
     
     private static final ThreadLocal<Map<Object, String>> threadLocalQueries = ThreadLocal.withInitial(ConcurrentHashMap::new);
     
-    /**
-     * Stores a query for a given memory ID in ThreadLocal storage.
-     */
     public static void setQuery(Object memoryId, String query) {
         threadLocalQueries.get().put(memoryId, query);
         logger.debug("Set query for memory ID {} in ThreadLocal: {}", memoryId, query);
     }
     
-    /**
-     * Retrieves the query for a given memory ID from ThreadLocal storage.
-     */
     public static String getQuery(Object memoryId) {
         Map<Object, String> threadQueries = threadLocalQueries.get();
         String query = threadQueries.get(memoryId);
-        if (query != null) {
-            logger.debug("Retrieved query from ThreadLocal for memory ID {}: {}", memoryId, query);
-        }
+        logger.debug("Retrieved query from ThreadLocal for memory ID {}: {}", memoryId, query);
         return query;
     }
     
-    /**
-     * Clears the query for a given memory ID from ThreadLocal storage.
-     * 
-     * @param memoryId The memory ID
-     */
     public static void clearQuery(Object memoryId) {
         threadLocalQueries.get().remove(memoryId);
         logger.debug("Cleared query for memory ID: {}", memoryId);
